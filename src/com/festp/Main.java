@@ -90,10 +90,10 @@ public class Main extends JavaPlugin implements Listener
 					
 					TaskList.tick();
 					
-					//beam, unload, save, process
+					// beam, unload, save, process
 					sthandler.onTick();
 					
-					//move and remove
+					// move and remove
 					BeamedPair.tickAll();
 				}
 			}, 0L, 1L);

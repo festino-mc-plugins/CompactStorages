@@ -35,7 +35,6 @@ public class Utils {
 	private static Main plugin;
 	private static UnsafeValues legacy;
 	private static Team teamNoCollide;
-	private static final String BUKKIT_PACKAGE = "org.bukkit.craftbukkit.";
 	public static final double EPSILON = 0.0001;
 	
 	public static void setPlugin(Main pl) {
@@ -53,8 +52,8 @@ public class Utils {
 
 	public static void onEnable()
 	{
-		//create no collide turtle team
-		String team_name = "HPTempNoCollide"; //HP is HodgePodge, limit of 16 characters
+		// create no collide team
+		String team_name = "CS_NoCollide"; // CS is CompactStorage, limit of 16 characters
 		Server server = plugin.getServer();
 		Scoreboard sb = server.getScoreboardManager().getMainScoreboard();
 		teamNoCollide = sb.getTeam(team_name);
