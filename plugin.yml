@@ -1,0 +1,13 @@
+name: CompactStorages
+version: 1.0.0
+authors: [FEST_Channel, EvilGeniys]
+
+description: Store all the stone in just one slot!
+
+main: com.festp.Main
+
+commands:
+         storage:
+           description: Provides storage management.
+           default: op
+api-version: 1.14
