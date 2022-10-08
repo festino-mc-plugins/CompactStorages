@@ -6,6 +6,7 @@
   • can't die or despawn while dropped  
   • can grab items from inventories (hopper support)  
   • have settings GUI  
+  • "/storage" - full storage management.  
 
 <h3>Storage types</h3>
 
