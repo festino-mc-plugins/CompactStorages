@@ -9,6 +9,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.festp.commands.StorageCommand;
+import com.festp.config.Config;
 import com.festp.menu.InventoryMenu;
 import com.festp.storages.StorageCraftManager;
 import com.festp.storages.StorageHandler;
@@ -25,12 +26,12 @@ public class Main extends JavaPlugin implements Listener
 	private static String PATH = "plugins" + System.getProperty("file.separator") + "HodgePodge" + System.getProperty("file.separator");
 	private static String pluginname;
 	
-	Config conf;
+	Config config;
 	private CraftManager craftManager;
 
 	public StoragesList stlist = new StoragesList();
 	public StoragesFileManager ststorage = new StoragesFileManager();
-	public StorageHandler sthandler = new StorageHandler(this);
+	public StorageHandler sthandler;
 	public StorageCraftManager stcraft;
 	
 	public World mainworld = null;
@@ -40,7 +41,8 @@ public class Main extends JavaPlugin implements Listener
 	}
 	
 	long t1;
-	public void onEnable() {
+	public void onEnable()
+	{
 		Logger.setLogger(getLogger());
 		pluginname = getName();
 		PATH = "plugins" + System.getProperty("file.separator") + pluginname + System.getProperty("file.separator");
@@ -62,10 +64,11 @@ public class Main extends JavaPlugin implements Listener
 		if (mainworld == null)
 			mainworld = getServer().getWorlds().get(0);
 		
-		conf = new Config(this);
-		Config.loadConfig();
+		config = new Config(this);
+		config.load();
     	craftManager = new CraftManager(this, getServer());
     	stcraft = new StorageCraftManager(this, getServer());
+    	sthandler = new StorageHandler(this, config, ststorage, stlist);
 		
 		int maxID = 0;
 		for (Integer ID : StoragesFileManager.getIDList())

@@ -13,11 +13,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import com.festp.Config;
 import com.festp.Main;
 
 public class BeamedPair implements Listener {	
@@ -66,8 +64,7 @@ public class BeamedPair implements Listener {
 	public static boolean canBeBeamed(Entity beamer, LivingEntity beamed) {
 		return beamer != null && beamed != null &&
 				!beamer.isDead() && !beamed.isDead() &&
-				beamer.getWorld() == beamed.getWorld()
-				&& beamed.getLocation().distanceSquared(beamer.getLocation()) < Config.storage_signal_radius*Config.storage_signal_radius; //storage dependent
+				beamer.getWorld() == beamed.getWorld();
 				//&& beamed.hasLineOfSight(beamer);
 	}
 

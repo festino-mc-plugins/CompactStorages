@@ -38,10 +38,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import com.festp.Config;
 import com.festp.DelayedTask;
+import com.festp.Logger;
 import com.festp.Pair;
 import com.festp.TaskList;
+import com.festp.config.Config;
+import com.festp.config.Key;
 import com.festp.Main;
 import com.festp.storages.Storage.Grab;
 import com.festp.storages.StorageMultitype.HandleTime;
@@ -54,9 +56,9 @@ import com.festp.utils.UtilsType;
 
 public class StorageHandler implements Listener
 {
-	Main plugin;
+	Main plugin; // allows to check all item entities
 	private int storage_save_ticks = 0;
-	private int storage_save_maxticks = 3*60*20; //3 minutes
+	private int storage_save_maxticks = 3 * 60 * 20; //3 minutes
 	private int storage_unloadcheck_ticks = 0;
 	private int storage_unloadcheck_maxticks = 60*20; // 1 munute
 	private List<Inventory> updating_invs = new ArrayList<>();
@@ -64,9 +66,16 @@ public class StorageHandler implements Listener
 	public static final String LABEL_YOUR_ITEMS = "YOUR ITEMS";
 	private static Sound PICKUP_SOUND = Sound.ENTITY_CHICKEN_EGG;
 	
-	public StorageHandler(Main plugin)
+	private Config config;
+	private StoragesFileManager ststorage;
+	public StoragesList stlist;
+	
+	public StorageHandler(Main plugin, Config config, StoragesFileManager ststorage, StoragesList stlist)
 	{
 		this.plugin = plugin;
+		this.config = config;
+		this.ststorage = ststorage;
+		this.stlist = stlist;
 	}
 	
 	public void onTick()
@@ -86,19 +95,20 @@ public class StorageHandler implements Listener
 						continue;
 					
 					item.setInvulnerable(true);
-					Player nearest_player = null;
-					double dist_squared = Config.storage_signal_radius*Config.storage_signal_radius;
-					for (Entity entity : item.getNearbyEntities(Config.storage_signal_radius, Config.storage_signal_radius, Config.storage_signal_radius)) {
+					Player nearestPlayer = null;
+					double storageSignalRadius = config.get(Key.STORAGE_SIGNAL_RADIUS, 30.0);
+					double minDistSquared = storageSignalRadius * storageSignalRadius;
+					for (Entity entity : item.getNearbyEntities(storageSignalRadius, storageSignalRadius, storageSignalRadius)) {
 						if (entity instanceof Player) {
-							double cur_dist_squared = item.getLocation().distanceSquared(entity.getLocation());
-							if (BeamedPair.canBeBeamed(item, (Player)entity) && dist_squared >= cur_dist_squared) {
-								nearest_player = (Player)entity;
-								dist_squared = cur_dist_squared;
+							double distSquared = item.getLocation().distanceSquared(entity.getLocation());
+							if (distSquared <= minDistSquared && BeamedPair.canBeBeamed(item, (Player)entity)) {
+								nearestPlayer = (Player)entity;
+								minDistSquared = distSquared;
 							}
 						}
 					}
-					if (nearest_player != null) {
-						BeamedPair.add(item, nearest_player);
+					if (nearestPlayer != null) {
+						BeamedPair.add(item, nearestPlayer);
 					}
 				}
 			}
@@ -125,13 +135,13 @@ public class StorageHandler implements Listener
 
 		storage_unloadcheck_ticks += 1;
 		if (storage_unloadcheck_ticks >= storage_unloadcheck_maxticks) {
-			plugin.stlist.tryUnload(TimeUtils.getTicks());
+			stlist.tryUnload(TimeUtils.getTicks());
 			storage_unloadcheck_ticks = 0;
 		}
 		
 		storage_save_ticks += 1;
 		if(storage_save_ticks >= storage_save_maxticks) {
-			plugin.stlist.saveStorages();
+			stlist.saveStorages();
 			storage_save_ticks = 0;
 		}
 	}
@@ -160,9 +170,9 @@ public class StorageHandler implements Listener
         for (ItemStack is : inv.getContents()) {
         	int id = Storage.getID(is);
         	if (id >= 0) {
-        		Storage st = plugin.stlist.get(id);
+        		Storage st = stlist.get(id);
         		if (st == null)
-					plugin.getLogger().severe("Storage(ID="+id+") could not load (on open "+inv+" / "+Utils.toString(inv.getLocation())+")");
+					Logger.severe("Storage(ID="+id+") could not load (on open "+inv+" / "+Utils.toString(inv.getLocation())+")");
         		else
         			st.setExternalInventory(inv);
         	}
@@ -294,7 +304,7 @@ public class StorageHandler implements Listener
 				}
 				
 				//delete storage
-				plugin.ststorage.deleteDataFile(storage.ID);
+				ststorage.deleteDataFile(storage.ID);
 			}
 		}
 		else if (st instanceof StorageBottomless)
@@ -330,7 +340,7 @@ public class StorageHandler implements Listener
 				}
 				
 				//delete storage
-				plugin.ststorage.deleteDataFile(storage.ID);
+				ststorage.deleteDataFile(storage.ID);
 			}
 		}
 	}
@@ -373,9 +383,9 @@ public class StorageHandler implements Listener
 			int id = Storage.getID(event.getItem());
 			if(id >= 0) {
 				event.setCancelled(true);
-				Storage st = plugin.stlist.get(id);
+				Storage st = stlist.get(id);
 				if(st == null) {
-					plugin.getLogger().severe("Storage(ID="+id+") could not load (on interact of "
+					Logger.severe("Storage(ID="+id+") could not load (on interact of "
 							+event.getPlayer().getName()+Utils.toString(event.getPlayer().getLocation())+")");
 					//delete storage tag from itemstack or create new storage - configurable?
 					return;
@@ -413,7 +423,7 @@ public class StorageHandler implements Listener
 		ItemStack current_item = event.getCurrentItem(), cursor = event.getCursor();
 		
 		// click with opened Storage Inventory
-		Storage st = plugin.stlist.findByInventory(event.getView().getTopInventory());
+		Storage st = stlist.findByInventory(event.getView().getTopInventory());
 		if(st instanceof StorageMultitype) {
 			StorageMultitype sm = (StorageMultitype)st;
 			switch(event.getAction())
@@ -706,7 +716,7 @@ public class StorageHandler implements Listener
 		delayedGrab(event.getView().getBottomInventory());		
 	}
 	
-	// TODO Mark bucket in order to Grab.NEW
+	// TODO Mark the bucket in order to Grab.NEW
 	@EventHandler
 	public void onBucketFill(PlayerBucketFillEvent event)
 	{
@@ -722,7 +732,7 @@ public class StorageHandler implements Listener
 	public void onInventoryClose(InventoryCloseEvent event)
 	{
 		Inventory inventory = event.getInventory();
-		Storage st = plugin.stlist.findByInventory(inventory);
+		Storage st = stlist.findByInventory(inventory);
 		if (st instanceof StorageMultitype)
 			if (inventory.getViewers().size() == 1) { // because when closing last player is still considered as a viewer
 				StorageMultitype sm = (StorageMultitype)st;
@@ -739,7 +749,7 @@ public class StorageHandler implements Listener
 		if (st != null)
 			st.setExternalInventory(event.getInventory());
 		
-		st = plugin.stlist.findByInventory(event.getView().getTopInventory());
+		st = stlist.findByInventory(event.getView().getTopInventory());
 		if (st != null && st instanceof StorageMultitype) {
 			switch (event.getType())
 			{
@@ -858,7 +868,7 @@ public class StorageHandler implements Listener
 			if (stacks[i] == null) continue;
 			int storage_id = Storage.getID(stacks[i]);
 			if (storage_id >= 0) {
-				Storage st = plugin.stlist.get(storage_id);
+				Storage st = stlist.get(storage_id);
 				if (st == null || !st.canGrab(inv)) continue;
 				if (st instanceof StorageBottomless)
 				{
@@ -900,7 +910,7 @@ public class StorageHandler implements Listener
 		for(ItemStack is : inv.getContents())
 		{
 			int id = Storage.getID(is);
-			Storage st = plugin.stlist.get(id);
+			Storage st = stlist.get(id);
 			if(st != null)
 			{
 				if (st.canGrab() == Grab.NEW)
