@@ -6,6 +6,7 @@ import java.util.List;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.World;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Entity;
@@ -64,7 +65,7 @@ public class StorageHandler implements Listener
 	private List<Inventory> updating_invs = new ArrayList<>();
 	private List<Inventory> grabbing_invs = new ArrayList<>();
 	public static final String LABEL_YOUR_ITEMS = "YOUR ITEMS";
-	private static Sound PICKUP_SOUND = Sound.ENTITY_CHICKEN_EGG;
+	private static final Sound PICKUP_SOUND = Sound.ENTITY_CHICKEN_EGG;
 	
 	private Config config;
 	private StoragesFileManager ststorage;
@@ -771,13 +772,14 @@ public class StorageHandler implements Listener
 	
 	@EventHandler(priority=EventPriority.HIGHEST)
 	public void onEntityPickupItemEvent(EntityPickupItemEvent event) {
-		if(event.isCancelled()) return;
+		if (event.isCancelled()) return;
 		if (event.getEntityType() != EntityType.PLAYER) return;
 
 		Player player = (Player) event.getEntity();
-		boolean storage_pickup = work_pickup_event(((Player)event.getEntity()).getInventory(), event.getItem(), event);
+		boolean storage_pickup = work_pickup_event(player.getInventory(), event.getItem(), event);
 		if (storage_pickup) {
-			player.playSound(player.getLocation(), PICKUP_SOUND, 0.7F, 2F);
+			World world = player.getWorld();
+			world.playSound(player.getLocation(), PICKUP_SOUND, SoundCategory.PLAYERS, 0.2f, 2f);
 		}
 	}
 
