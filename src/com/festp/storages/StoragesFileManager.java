@@ -80,6 +80,9 @@ public class StoragesFileManager {
 	
 	public Storage loadStorage(int ID){
 		File dataFile = new File(Main.getPath() + Main.storagesdir, ID + ".yml");
+		if (!dataFile.exists())
+			return null;
+		
 		ItemFileManager.backupIfUpdateVersion(dataFile);
 		FileConfiguration ymlFormat = YamlConfiguration.loadConfiguration(dataFile);
 		//type
@@ -87,7 +90,7 @@ public class StoragesFileManager {
 		try {
 			if (stype.contains("bottomless")) {
 				String smat = ymlFormat.getString("material");
-				if(Material.valueOf(smat) == null)
+				if (Material.valueOf(smat) == null)
 					return null;
 				
 				StorageBottomless st = new StorageBottomless(ID, TimeUtils.getTicks(), Material.valueOf(smat));
