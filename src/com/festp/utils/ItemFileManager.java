@@ -138,28 +138,6 @@ public class ItemFileManager {
 		return new ItemLoadResult(inv, errored);
 	}
 	
-	// temporary backward compatibility
-	@Deprecated
-	public static ItemLoadResult loadEC(FileConfiguration ymlFormat)
-	{
-		if (!ymlFormat.contains("EnderChestSlot"))
-			return load(ymlFormat);
-		
-		int slots = ymlFormat.getInt("slots");
-		ArrayList<ItemStack> items = new ArrayList<ItemStack>();
-		boolean errored = false;
-		for (int i = 0; i < slots; i++) {
-			try {
-				ItemStack item = ymlFormat.getItemStack("EnderChestSlot." + i);
-				items.add(item);
-			} catch(Exception ex) {
-				errored = true;
-			}
-		}
-		ItemStack[] inv = items.toArray(new ItemStack[0]);
-		return new ItemLoadResult(inv, errored);
-	}
-	
 	/** no backup */
 	public static File getBackupPath(File dataFile) {
 		String dataDir = dataFile.getParent();
